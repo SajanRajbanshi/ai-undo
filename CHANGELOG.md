@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-07-28
+
+No functional changes since 0.1.0. The version marks the extension as stable and
+documented rather than any change in behaviour.
+
+### Changed
+
+- **Installation is now the first thing the README covers**, immediately after what
+  the extension is for: marketplace search for the forks, and a `.vsix` download for
+  everyone else.
+- **Per-platform install commands.** Separate, copy-pasteable lines for macOS, Linux,
+  Windows PowerShell and Windows Command Prompt, saying where to run them, plus the
+  `code: command not found` recovery for each platform.
+- **Screencasts** of installing from a `.vsix`, and of reviewing a pending change.
+- Documentation assets live in `docs/` and are excluded from the packaged extension,
+  so the VSIX is unchanged in content and size.
+
 ## [0.1.0] — 2026-07-25
 
 Initial release.
