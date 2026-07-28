@@ -289,7 +289,7 @@ A `.checkpoints/` directory inside the project would be actively harmful here:
 ```
 ~/Library/Application Support/Code/User/workspaceStorage/
 └── <workspace-hash>/
-    └── sajan.local-file-change-tracker/
+    └── SajanRajbanshi.ai-undo/
         ├── shadow.git/              GIT_DIR. Never a .git inside the project.
         │   ├── objects/             content-addressed, packed by gc
         │   ├── refs/heads/main
