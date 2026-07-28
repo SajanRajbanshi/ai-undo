@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG, resolveConfig, trackedSetChanged } from '../../src/config';
 import { GitMarkerTracker } from '../../src/detect/GitOpMonitor';
 import { parseNameStatusZ } from '../../src/store/CheckpointStore';
+import { writeMeta, type StoreMeta } from '../../src/store/init';
 import { parseGitVersion, pathspecStdin, versionAtLeast } from '../../src/store/git';
 import { binaryPlaceholder, isBinary, makeAddedFilePatch } from '../../src/store/patch';
 import { Emitter } from '../../src/util/emitter';
@@ -198,6 +199,45 @@ describe('Emitter', () => {
     emitter.fire();
     emitter.fire();
     expect(count).toBe(1);
+  });
+});
+
+/**
+ * `commitPaths` calls `writeMeta` *outside* the git queue in `git.ts`, so two
+ * accepts landing together are not serialized here. A shared temp filename made
+ * one writer's rename move the file out from under the other's, which surfaced
+ * as a failed Accept for an accept that had in fact already committed.
+ */
+describe('writeMeta under concurrency (§7.1)', () => {
+  let ws: TempWorkspace;
+  beforeEach(async () => {
+    ws = await makeTempWorkspace('lfct-meta-');
+  });
+  afterEach(async () => {
+    await ws.cleanup();
+  });
+
+  const meta = (i: number): StoreMeta => ({
+    version: '0.1.0',
+    schemaVersion: 1,
+    worktreePath: '/somewhere',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    lastAcceptAt: `2026-01-01T00:00:0${i}.000Z`,
+  });
+
+  it('survives many writers racing, and leaves the file readable', async () => {
+    await Promise.all(Array.from({ length: 40 }, (_, i) => writeMeta(ws.root, meta(i % 10))));
+
+    const written = JSON.parse(await ws.readText('meta.json')) as StoreMeta;
+    expect(written.schemaVersion).toBe(1);
+    expect(written.worktreePath).toBe('/somewhere');
+  });
+
+  it('leaves no temp files behind', async () => {
+    await Promise.all(Array.from({ length: 40 }, (_, i) => writeMeta(ws.root, meta(i % 10))));
+
+    const leftovers = (await fs.readdir(ws.root)).filter((f) => f.includes('.tmp'));
+    expect(leftovers).toEqual([]);
   });
 });
 

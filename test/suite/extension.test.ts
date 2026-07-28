@@ -1,4 +1,5 @@
 import * as assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
@@ -11,7 +12,18 @@ import type { LfctApi } from '../../src/extension';
  * which need a real VS Code.
  */
 
-const EXTENSION_ID = 'sajan.local-file-change-tracker';
+/**
+ * Read from the manifest rather than written out, because a hardcoded id
+ * silently rots: renaming the extension left this pointing at
+ * `sajan.local-file-change-tracker`, and since `npm test` does not run this
+ * suite, nothing noticed until CI did.
+ *
+ * `__dirname` is `out/test/suite` once compiled, so three levels up is the root.
+ */
+const manifest = JSON.parse(
+  readFileSync(path.join(__dirname, '..', '..', '..', 'package.json'), 'utf8'),
+) as { publisher: string; name: string };
+const EXTENSION_ID = `${manifest.publisher}.${manifest.name}`;
 
 let api: LfctApi;
 let workspaceRoot: string;
@@ -129,24 +141,30 @@ suite('Local File Change Tracker', () => {
       const editor = vscode.window.activeTextEditor;
       assert.ok(editor, 'no editor opened');
       assert.equal(editor.document.uri.scheme, 'lfct-patch');
-      assert.equal(editor.document.languageId, 'diff');
+      // The URI keeps the file's extension so the file's own grammar applies;
+      // forcing `diff` would render the code as plain text (§7.5.1).
+      assert.equal(editor.document.languageId, 'typescript');
 
+      // `+`/`-` prefixes are stripped so the lines are tokenizable as source —
+      // the change kind lives in the decorations, not in the text.
       const text = editor.document.getText();
-      assert.ok(text.includes('+export const app = 999;'), `patch was:\n${text}`);
-      assert.ok(text.includes('-export const app = 1;'), `patch was:\n${text}`);
+      assert.ok(text.includes('export const app = 999;'), `patch was:\n${text}`);
+      assert.ok(text.includes('export const app = 1;'), `patch was:\n${text}`);
+      assert.ok(!text.includes('@@'), `hunk headers should be gone:\n${text}`);
+      assert.ok(!text.includes('diff --git'), `file header should be gone:\n${text}`);
     });
 
     test('renders an added file as all additions', async () => {
       await vscode.commands.executeCommand('lfct.openDiff', target('src/generated.ts', 'A'));
       const text = vscode.window.activeTextEditor!.document.getText();
-      assert.ok(text.includes('new file mode'), text);
-      assert.ok(text.includes('+export const gen = 1;'), text);
+      assert.ok(!text.includes('new file mode'), `git plumbing should be stripped:\n${text}`);
+      assert.ok(text.includes('export const gen = 1;'), text);
     });
 
     test('renders a deleted file as all deletions', async () => {
       await vscode.commands.executeCommand('lfct.openDiff', target('src/doomed.ts', 'D'));
       const text = vscode.window.activeTextEditor!.document.getText();
-      assert.ok(text.includes('-export const doomed = 3;'), text);
+      assert.ok(text.includes('export const doomed = 3;'), text);
     });
 
     test('the baseline provider serves prior content, and empty for a new file', async () => {
@@ -188,7 +206,7 @@ suite('Local File Change Tracker', () => {
 
       await vscode.commands.executeCommand('lfct.openDiff', target('src/utils.ts', 'M'));
       const doc = vscode.window.activeTextEditor!.document;
-      assert.ok(doc.getText().includes('+export const util = 42;'));
+      assert.ok(doc.getText().includes('export const util = 42;'));
 
       await vscode.commands.executeCommand('lfct.acceptFile', target('src/utils.ts', 'M'));
       // Give the content provider's onDidChange time to propagate.
@@ -196,7 +214,7 @@ suite('Local File Change Tracker', () => {
 
       const refreshed = await vscode.workspace.openTextDocument(doc.uri);
       assert.ok(
-        !refreshed.getText().includes('+export const util = 42;'),
+        !refreshed.getText().includes('export const util = 42;'),
         `patch view went stale:\n${refreshed.getText()}`,
       );
       await vscode.commands.executeCommand('workbench.action.closeAllEditors');

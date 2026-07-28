@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -258,11 +259,34 @@ async function readOrCreateMeta(
   return meta;
 }
 
+/**
+ * Write-then-rename, so a crash mid-write can never leave a truncated
+ * `meta.json` that fails to parse on the next open.
+ *
+ * The temp name must be unique per write. Two accepts can reach here at the
+ * same moment — a git-operation auto-accept racing a user's Accept, or per-hunk
+ * accepts in quick succession — and `commitPaths` calls this *outside* the git
+ * queue in `git.ts`, so that queue does not serialize it. With a shared
+ * `meta.json.tmp` the interleaving is:
+ *
+ *   A writes tmp → B writes tmp → A renames tmp away → B renames → ENOENT
+ *
+ * which surfaces as "Could not accept changes… Nothing on disk was modified"
+ * for an accept that in fact succeeded, and leaves a stray temp file behind.
+ * Unique names make each writer's rename atomic and independent; last one wins,
+ * which is correct because the only field that differs is `lastAcceptAt`.
+ */
 export async function writeMeta(storagePath: string, meta: StoreMeta): Promise<void> {
   const metaPath = path.join(storagePath, META_FILE_NAME);
-  const tmp = `${metaPath}.tmp`;
+  const tmp = `${metaPath}.${process.pid}.${randomUUID()}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(meta, null, 2), 'utf8');
-  await fs.rename(tmp, metaPath);
+  try {
+    await fs.rename(tmp, metaPath);
+  } catch (err) {
+    // Never leave the temp file behind; the store directory is the user's.
+    await fs.rm(tmp, { force: true });
+    throw err;
+  }
 }
 
 function samePath(a: string, b: string): boolean {

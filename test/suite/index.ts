@@ -4,7 +4,11 @@ import { glob } from 'glob';
 
 export async function run(): Promise<void> {
   const mocha = new Mocha({
-    ui: 'bdd',
+    // TDD, matching how the suite declares itself (`suite`/`test`). With `bdd`
+    // those globals do not exist and the file throws `suite is not defined`
+    // while loading — before a single test runs, so the failure looks like a
+    // harness crash rather than a mismatch.
+    ui: 'tdd',
     color: true,
     // The baseline build, sweeps and editor round-trips are all real work.
     timeout: 60_000,
