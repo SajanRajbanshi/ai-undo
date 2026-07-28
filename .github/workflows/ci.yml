@@ -99,6 +99,14 @@ jobs:
             echo "OVSX_PAT is not set; skipping Open VSX."
             exit 0
           fi
+          # Read from the manifest rather than written out: the namespace must
+          # equal `publisher` exactly, and a second hardcoded copy is the kind
+          # that silently rots across a rename.
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          # Idempotent. The namespace only needs creating once and errors on a
+          # second attempt, so a failure here is expected on every release but
+          # the first.
+          npx ovsx create-namespace "$PUBLISHER" || echo "Namespace $PUBLISHER already exists; continuing."
           npx ovsx publish ./*.vsix --pat "$OVSX_PAT"
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
