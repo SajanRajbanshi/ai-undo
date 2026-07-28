@@ -86,10 +86,35 @@ export async function git(cwd: string, args: string[]): Promise<string> {
 
 /** Initializes the workspace as a normal git repository with one commit. */
 export async function initRealRepo(root: string): Promise<void> {
-  await git(root, ['-c', 'init.defaultBranch=main', 'init', '--quiet']);
+  await git(root, ['init', '--quiet']);
+  await setDefaultBranch(root);
   await git(root, ['config', 'user.name', 'Test']);
   await git(root, ['config', 'user.email', 'test@example.com']);
   await git(root, ['config', 'commit.gpgsign', 'false']);
+}
+
+/** A bare repository to push to, with its HEAD on the same branch as `initRealRepo`. */
+export async function initBareRepo(dir: string): Promise<void> {
+  await git(dir, ['init', '--quiet', '--bare']);
+  await setDefaultBranch(dir);
+}
+
+/**
+ * Pins the branch name so tests do not inherit whichever default the host git
+ * happens to use.
+ *
+ * `-c init.defaultBranch=main` looks like it does this, but it only landed in
+ * git 2.28 and is silently ignored below that — and the extension supports
+ * 2.26. Worse, it was only ever applied to the work-tree repo, so a bare remote
+ * kept a `master` HEAD; cloning it then checked out `master`, and a later
+ * `push origin main` failed with "src refspec main does not match any". That
+ * passed on any machine whose global config already set `main` and failed on
+ * every CI runner, which is the worst way for a test to be wrong.
+ *
+ * `symbolic-ref` works on every version and does not depend on config at all.
+ */
+async function setDefaultBranch(dir: string): Promise<void> {
+  await git(dir, ['symbolic-ref', 'HEAD', 'refs/heads/main']);
 }
 
 export const GIT_VERSION = { major: 2, minor: 39, patch: 0, raw: 'git version 2.39.0' };

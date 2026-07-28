@@ -9,7 +9,14 @@ import {
 } from '../../src/detect/ChangeDetector';
 import { GitOpMonitor, resolveGitDir } from '../../src/detect/GitOpMonitor';
 import { createMemoryLogger } from '../../src/log';
-import { git, initRealRepo, makeTempWorkspace, sleep, type TempWorkspace } from '../helpers/tmp';
+import {
+  git,
+  initBareRepo,
+  initRealRepo,
+  makeTempWorkspace,
+  sleep,
+  type TempWorkspace,
+} from '../helpers/tmp';
 
 /**
  * §13.2 / §6.8 — real git operations against a real repository.
@@ -168,7 +175,7 @@ describe('marker coverage — every work-tree-rewriting operation moves somethin
     await git(ws.root, ['commit', '-q', '-m', 'first']);
 
     await fs.mkdir(remote, { recursive: true });
-    await git(remote, ['init', '--quiet', '--bare']);
+    await initBareRepo(remote);
     await git(ws.root, ['remote', 'add', 'origin', remote]);
     await git(ws.root, ['push', '--quiet', '-u', 'origin', 'main']);
 
