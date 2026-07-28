@@ -60,11 +60,14 @@ jobs:
           path: '*.vsix'
           if-no-files-found: error
 
-  publish:
-    name: Publish to Marketplace
+  release:
+    name: Release
     needs: test
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    # Needed to attach the VSIX to the GitHub release.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -72,7 +75,40 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Publish
-        run: npx vsce publish --no-dependencies --pat "$VSCE_PAT"
+      - run: npm run package
+
+      # Always runs, and needs no account: anyone can download the VSIX and
+      # install it by hand. This is the distribution channel that works before
+      # either registry is set up, and the fallback if one is ever unavailable.
+      - name: Attach the VSIX to the GitHub release
+        run: |
+          gh release create "$GITHUB_REF_NAME" ./*.vsix \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag \
+          || gh release upload "$GITHUB_REF_NAME" ./*.vsix --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      # Both registries are optional and independent: a missing token skips
+      # that one rather than failing the release. Tagging therefore works today,
+      # with tokens added whenever the accounts exist.
+      - name: Publish to Open VSX (Cursor, Antigravity, Windsurf, VSCodium)
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "OVSX_PAT is not set; skipping Open VSX."
+            exit 0
+          fi
+          npx ovsx publish ./*.vsix --pat "$OVSX_PAT"
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+      - name: Publish to the VS Code Marketplace
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "VSCE_PAT is not set; skipping the VS Code Marketplace."
+            exit 0
+          fi
+          npx vsce publish --no-dependencies --pat "$VSCE_PAT"
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

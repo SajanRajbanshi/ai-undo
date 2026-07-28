@@ -77,6 +77,22 @@ Every auto-accepted operation is recorded in the extension's output channel. Cha
 
 ---
 
+## Installing
+
+**Cursor, Antigravity, Windsurf, VSCodium** — search for **AI Undo** in the Extensions view. These install from [Open VSX](https://open-vsx.org).
+
+**Any editor, from a file** — download `ai-undo-<version>.vsix` from the [latest release](https://github.com/SajanRajbanshi/ai-undo/releases), then either:
+
+```bash
+code --install-extension ai-undo-0.1.0.vsix     # or: cursor / codium / antigravity-ide
+```
+
+or in the editor: **Extensions** view → `···` menu → **Install from VSIX…**
+
+A VSIX install does not auto-update, so watch the [releases page](https://github.com/SajanRajbanshi/ai-undo/releases) if you install this way.
+
+---
+
 ## Requirements
 
 - **`git` 2.26 or newer on your `PATH`.** The checkpoint store *is* a git repository — one that lives in VS Code's extension storage, never in your project. Activation fails with an actionable message if git is missing.
