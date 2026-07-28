@@ -241,6 +241,14 @@ suite('Local File Change Tracker', () => {
       await vscode.commands.executeCommand('lfct.rejectFile', target('src/app.ts', 'M'));
 
       assert.equal(await fs.readFile(abs('src/app.ts'), 'utf8'), 'export const app = 1;\n');
+
+      // Reject awaits its own sweep, but that sweep can be superseded by one a
+      // burst started moments earlier — `runSweep` applies only the newest
+      // generation, so the command can return while the superseding sweep is
+      // still in flight and the list is briefly a beat behind. Every other
+      // pending assertion in this file refreshes first; this one did not, which
+      // is why it only ever failed on a slower machine.
+      await api.refresh();
       assert.ok(!('src/app.ts' in pendingMap()));
     });
 
