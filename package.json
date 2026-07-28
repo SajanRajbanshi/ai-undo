@@ -1,0 +1,475 @@
+{
+  "name": "ai-undo",
+  "displayName": "AI Undo — Review & Revert Agent File Changes",
+  "description": "Undo what a coding agent changed on disk — including files its scripts and shell commands touched, which agent checkpoints miss. Claude Code, opencode, Codex, or any tool that writes files. Review every added and removed line, then keep or revert.",
+  "version": "0.1.0",
+  "publisher": "sajan",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.80.0",
+    "node": ">=18"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "undo",
+    "revert",
+    "rollback",
+    "restore",
+    "checkpoint",
+    "claude",
+    "claude-code",
+    "codex",
+    "opencode",
+    "bash",
+    "script",
+    "diff"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SajanRajbanshi/ai-undo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SajanRajbanshi/ai-undo/issues"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Tracking runs git against the workspace and can overwrite files on disk when you reject a change, so it stays disabled until the folder is trusted."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "A baseline needs a real filesystem and a local git binary, neither of which a virtual workspace provides."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "lfct.acceptFile",
+        "title": "Accept",
+        "category": "AI Undo",
+        "icon": "$(check)"
+      },
+      {
+        "command": "lfct.rejectFile",
+        "title": "Reject",
+        "category": "AI Undo",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "lfct.acceptAll",
+        "title": "Accept All Changes",
+        "category": "AI Undo",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "lfct.rejectAll",
+        "title": "Reject All Changes",
+        "category": "AI Undo",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "lfct.openDiff",
+        "title": "Open AI Changes",
+        "category": "AI Undo",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "lfct.openDiffSideBySide",
+        "title": "Open Changes (Side by Side)",
+        "category": "AI Undo"
+      },
+      {
+        "command": "lfct.toggleDiffView",
+        "title": "Toggle Inline / Side-by-Side Diff",
+        "category": "AI Undo"
+      },
+      {
+        "command": "lfct.refresh",
+        "title": "Refresh",
+        "category": "AI Undo",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "lfct.revealStorage",
+        "title": "Reveal Checkpoint Storage",
+        "category": "AI Undo"
+      },
+      {
+        "command": "lfct.listStores",
+        "title": "Manage Checkpoint Storage",
+        "category": "AI Undo"
+      },
+      {
+        "command": "lfct.rebuildBaseline",
+        "title": "Rebuild Baseline From Disk",
+        "category": "AI Undo"
+      },
+      {
+        "command": "lfct.showLog",
+        "title": "Show Log",
+        "category": "AI Undo"
+      },
+      {
+        "command": "lfct.rejectHunk",
+        "title": "Reject This Change",
+        "category": "AI Undo",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "lfct.acceptHunk",
+        "title": "Keep This Change",
+        "category": "AI Undo",
+        "icon": "$(check)"
+      },
+      {
+        "command": "lfct.rejectChange",
+        "title": "Reject This Change",
+        "category": "AI Undo",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "lfct.acceptChange",
+        "title": "Keep This Change",
+        "category": "AI Undo",
+        "icon": "$(check)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "lfct.acceptAll",
+          "when": "scmProvider == lfct && lfct.ready",
+          "group": "navigation@1"
+        },
+        {
+          "command": "lfct.rejectAll",
+          "when": "scmProvider == lfct && lfct.ready",
+          "group": "navigation@2"
+        },
+        {
+          "command": "lfct.refresh",
+          "when": "scmProvider == lfct",
+          "group": "navigation@3"
+        }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "lfct.acceptFile",
+          "when": "scmProvider == lfct && lfct.ready",
+          "group": "inline@1"
+        },
+        {
+          "command": "lfct.rejectFile",
+          "when": "scmProvider == lfct && lfct.ready",
+          "group": "inline@2"
+        },
+        {
+          "command": "lfct.acceptFile",
+          "when": "scmProvider == lfct && lfct.ready",
+          "group": "1_modification@1"
+        },
+        {
+          "command": "lfct.rejectFile",
+          "when": "scmProvider == lfct && lfct.ready",
+          "group": "1_modification@2"
+        },
+        {
+          "command": "lfct.openDiff",
+          "when": "scmProvider == lfct",
+          "group": "2_view@1"
+        },
+        {
+          "command": "lfct.openDiffSideBySide",
+          "when": "scmProvider == lfct",
+          "group": "2_view@2"
+        }
+      ],
+      "scm/change/title": [
+        {
+          "command": "lfct.acceptChange",
+          "when": "originalResourceScheme == lfct && lfct.ready",
+          "group": "navigation@1"
+        },
+        {
+          "command": "lfct.rejectChange",
+          "when": "originalResourceScheme == lfct && lfct.ready",
+          "group": "navigation@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "lfct.acceptFile",
+          "when": "false"
+        },
+        {
+          "command": "lfct.rejectFile",
+          "when": "false"
+        },
+        {
+          "command": "lfct.openDiff",
+          "when": "lfct.ready"
+        },
+        {
+          "command": "lfct.openDiffSideBySide",
+          "when": "false"
+        },
+        {
+          "command": "lfct.acceptAll",
+          "when": "lfct.ready"
+        },
+        {
+          "command": "lfct.rejectAll",
+          "when": "lfct.ready"
+        },
+        {
+          "command": "lfct.rejectHunk",
+          "when": "false"
+        },
+        {
+          "command": "lfct.acceptHunk",
+          "when": "false"
+        },
+        {
+          "command": "lfct.rejectChange",
+          "when": "false"
+        },
+        {
+          "command": "lfct.acceptChange",
+          "when": "false"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "lfct.openDiff",
+          "when": "lfct.activeFilePending",
+          "group": "navigation@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "lfct.openDiff",
+          "when": "lfct.ready && resourceScheme == file && !explorerResourceIsFolder",
+          "group": "3_compare@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AI Undo",
+      "properties": {
+        "lfct.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable change tracking. Requires a window reload to take effect."
+        },
+        "lfct.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Additional glob patterns to exclude from tracking. A bare name such as `fixtures` matches any path segment; a pattern containing `/` is matched against the workspace-relative path."
+        },
+        "lfct.include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Patterns to re-include, overriding the built-in exclusions and the size cap. Cannot override `.git`, `node_modules`, or the extension's own storage."
+        },
+        "lfct.maxFileSizeMB": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0.001,
+          "description": "Files larger than this are not tracked."
+        },
+        "lfct.notification": {
+          "type": "string",
+          "enum": [
+            "toast",
+            "badge",
+            "none"
+          ],
+          "default": "toast",
+          "enumDescriptions": [
+            "Show one notification per burst of external changes.",
+            "Update the Source Control badge only.",
+            "No notification and no badge change beyond the resource list."
+          ],
+          "description": "How to announce a burst of external file changes."
+        },
+        "lfct.diffView": {
+          "type": "string",
+          "enum": [
+            "liveFile",
+            "patch",
+            "sideBySide"
+          ],
+          "default": "patch",
+          "enumDescriptions": [
+            "Open the real file with changes highlighted in place and per-hunk Reject/Keep controls. Removed lines are summarized; click the gutter bar to see them in full.",
+            "Open a read-only unified patch showing every removed and added line, line by line.",
+            "Open the native two-pane diff editor."
+          ],
+          "description": "What clicking a changed file opens. The default shows every removed and added line in full; \"liveFile\" is editable and has per-hunk controls but can only summarize removed lines, which do not exist in the buffer."
+        },
+        "lfct.gitOperations": {
+          "type": "string",
+          "enum": [
+            "auto-accept",
+            "surface",
+            "prompt"
+          ],
+          "default": "auto-accept",
+          "description": "How to treat work-tree changes caused by git itself (pull, rebase, stash, checkout). Auto-accept is recommended: git operations already have the reflog as a safety net."
+        },
+        "lfct.userEditGraceMs": {
+          "type": "number",
+          "default": 2000,
+          "description": "How long an anticipated editor save stays valid before its filesystem event is treated as external."
+        },
+        "lfct.burstQuietMs": {
+          "type": "number",
+          "default": 750,
+          "description": "Quiet period after the last external write before a burst is considered settled."
+        },
+        "lfct.gitOpWindowMs": {
+          "type": "number",
+          "default": 3000,
+          "description": "Tolerance around a burst for correlating it with a .git marker change."
+        },
+        "lfct.reconcileIntervalMs": {
+          "type": "number",
+          "default": 60000,
+          "description": "Periodic full reconciliation interval. 0 disables periodic reconciliation."
+        },
+        "lfct.confirmReject": {
+          "type": "string",
+          "enum": [
+            "always",
+            "destructive",
+            "never"
+          ],
+          "default": "destructive",
+          "description": "When to require confirmation before rejecting. 'destructive' confirms for Reject All, unsaved buffers, and file deletion."
+        },
+        "lfct.fsMonitor": {
+          "type": "string",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "default": "off",
+          "markdownDescription": "Set `core.fsmonitor` in the shadow repository. Off by default: the built-in monitor spawns a background daemon over your project directory, which is only worth it on very large trees. Requires git >= 2.37 on macOS or Windows."
+        },
+        "lfct.showHunkControls": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show per-hunk Reject and Keep controls above each change in the editor."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "lfct-json",
+        "aliases": []
+      },
+      {
+        "id": "lfct-jsonc",
+        "aliases": []
+      },
+      {
+        "id": "lfct-html",
+        "aliases": []
+      },
+      {
+        "id": "lfct-css",
+        "aliases": []
+      },
+      {
+        "id": "lfct-scss",
+        "aliases": []
+      },
+      {
+        "id": "lfct-less",
+        "aliases": []
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lfct-json",
+        "scopeName": "source.lfct.json",
+        "path": "./syntaxes/lfct-json.tmLanguage.json"
+      },
+      {
+        "language": "lfct-jsonc",
+        "scopeName": "source.lfct.jsonc",
+        "path": "./syntaxes/lfct-jsonc.tmLanguage.json"
+      },
+      {
+        "language": "lfct-html",
+        "scopeName": "source.lfct.html",
+        "path": "./syntaxes/lfct-html.tmLanguage.json"
+      },
+      {
+        "language": "lfct-css",
+        "scopeName": "source.lfct.css",
+        "path": "./syntaxes/lfct-css.tmLanguage.json"
+      },
+      {
+        "language": "lfct-scss",
+        "scopeName": "source.lfct.scss",
+        "path": "./syntaxes/lfct-scss.tmLanguage.json"
+      },
+      {
+        "language": "lfct-less",
+        "scopeName": "source.lfct.less",
+        "path": "./syntaxes/lfct-less.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run check-types && npm run bundle -- --minify",
+    "bundle": "node esbuild.mjs",
+    "compile": "tsc -p ./ --outDir out",
+    "watch": "node esbuild.mjs --watch",
+    "check-types": "tsc --noEmit -p ./",
+    "lint": "eslint src test",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:perf": "vitest run test/perf",
+    "test:suite": "npm run bundle && npm run compile && node ./out/test/suite/runTest.js",
+    "test": "npm run test:unit && npm run test:integration",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.14.0",
+    "@types/picomatch": "^3.0.1",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.17.0",
+    "glob": "^11.0.0",
+    "mocha": "^11.0.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "picomatch": "^4.0.2"
+  }
+}

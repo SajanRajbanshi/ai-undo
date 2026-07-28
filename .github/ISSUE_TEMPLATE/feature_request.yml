@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an improvement.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Some things are already known non-goals for v1 — per-hunk operations,
+        per-turn rewind, multi-root workspaces, in-editor agents, and remote
+        environments. Those are tracked; you're welcome to add your use case to
+        an existing issue instead.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true

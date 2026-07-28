@@ -1,0 +1,27 @@
+.github/**
+.vscode/**
+.vscode-test/**
+out/**
+test/**
+scripts/**
+src/**
+node_modules/**
+
+**/*.ts
+**/*.map
+**/tsconfig.json
+**/eslint.config.mjs
+**/vitest.config.ts
+**/esbuild.mjs
+**/.eslintrc*
+**/.gitignore
+
+PLAN.md
+.gitattributes
+
+# Anything at the root that is not part of the published extension. The VSIX
+# ships everything not listed here, so scratch files added while developing
+# leak into the Marketplace listing unless they are named.
+Sajan.md
+random.cpp
+*.vsix

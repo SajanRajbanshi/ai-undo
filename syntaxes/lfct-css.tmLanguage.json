@@ -1,0 +1,9 @@
+{
+  "$comment": "Highlighting only: delegates entirely to source.css. Exists so the patch view can use a language no server registers for.",
+  "scopeName": "source.lfct.css",
+  "patterns": [
+    {
+      "include": "source.css"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # The whole store is a git repository, so the runner's git version is
+      # part of the contract (>= 2.26 for --pathspec-from-file).
+      - name: Record git version
+        run: git --version
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run check-types
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Integration tests (real git, real filesystem)
+        run: npm run test:integration
+
+      # §13.4 — catches order-of-magnitude regressions, not exact milliseconds.
+      # The budgets carry a CI multiplier; see test/perf/walk.test.ts.
+      - name: Performance harness
+        run: npm run test:perf
+
+      - name: Extension host tests
+        # A headless extension host needs a virtual display on Linux.
+        run: ${{ matrix.os == 'ubuntu-latest' && 'xvfb-run -a npm run test:suite' || 'npm run test:suite' }}
+
+      - name: Package
+        run: npm run package
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-${{ matrix.os }}
+          path: '*.vsix'
+          if-no-files-found: error
+
+  publish:
+    name: Publish to Marketplace
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Publish
+        run: npx vsce publish --no-dependencies --pat "$VSCE_PAT"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

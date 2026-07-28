@@ -1,0 +1,9 @@
+{
+  "$comment": "Highlighting only: delegates entirely to source.json.comments. Exists so the patch view can use a language no server registers for.",
+  "scopeName": "source.lfct.jsonc",
+  "patterns": [
+    {
+      "include": "source.json.comments"
+    }
+  ]
+}
