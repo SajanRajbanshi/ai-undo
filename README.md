@@ -8,6 +8,93 @@ Claude Code, opencode, Codex and friends edit files on disk directly. By the tim
 
 ---
 
+## Install
+
+### From your editor's extension marketplace
+
+**Cursor, Antigravity, Windsurf, VSCodium** — open the Extensions view and search for **AI Undo**. These install from [Open VSX](https://open-vsx.org).
+
+### From a `.vsix` file — works in any editor, including VS Code
+
+Download `ai-undo-1.0.0.vsix` from the [latest release](https://github.com/SajanRajbanshi/ai-undo/releases) — it lands in your **Downloads** folder. Then take either route below.
+
+#### Route A — click through the editor
+
+Open the **Extensions** view (<kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>), click the **`···`** menu at the top of that panel, and choose **Install from VSIX…**. A file picker opens — select the `.vsix` you just downloaded.
+
+![Choosing Install from VSIX… in the Extensions ··· menu, selecting the .vsix in the file picker, and the extension finishing installation](https://raw.githubusercontent.com/SajanRajbanshi/ai-undo/main/docs/images/install-from-vsix.gif)
+
+Reload the window when prompted, and **AI Changes** appears in the Source Control view.
+
+#### Route B — one command in a terminal
+
+**Where to run it:** in any terminal on your machine — your system terminal or the editor's own integrated terminal (<kbd>Ctrl</kbd>+<kbd>&#96;</kbd>). It does **not** have to be your project folder; the only thing that matters is that the path points at the file you downloaded. The `cd` in each snippet just moves you into Downloads so the bare filename resolves.
+
+**macOS** — Terminal or iTerm:
+
+```bash
+cd ~/Downloads
+code --install-extension ai-undo-1.0.0.vsix
+```
+
+**Linux** — any shell:
+
+```bash
+cd ~/Downloads
+code --install-extension ai-undo-1.0.0.vsix
+```
+
+**Windows** — PowerShell:
+
+```powershell
+cd $env:USERPROFILE\Downloads
+code --install-extension .\ai-undo-1.0.0.vsix
+```
+
+**Windows** — Command Prompt (`cmd.exe`):
+
+```bat
+cd %USERPROFILE%\Downloads
+code --install-extension ai-undo-1.0.0.vsix
+```
+
+Restart the editor afterwards. Installing on top of an existing copy? Add `--force` to skip the overwrite prompt.
+
+For a fork, swap `code` for that editor's own CLI — `cursor`, `windsurf`, `codium`, or `antigravity-ide`. Everything else about the command is identical.
+
+<details>
+<summary><strong><code>code: command not found</code>?</strong></summary>
+
+The editor is installed; its command-line launcher just isn't on your `PATH`.
+
+- **macOS** — VS Code doesn't add it during installation. Open the Command Palette (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) and run **Shell Command: Install 'code' command in PATH**, then open a *new* terminal. Or skip `PATH` entirely and call the binary directly:
+
+  ```bash
+  "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension ~/Downloads/ai-undo-1.0.0.vsix
+  ```
+
+  Cursor's equivalent is `/Applications/Cursor.app/Contents/Resources/app/bin/cursor`.
+
+- **Linux** — the `.deb` and `.rpm` packages put `code` on your `PATH` for you. A Snap install exposes it at `/snap/bin/code`; with the `.tar.gz` build, add the extracted `bin/` directory to your `PATH`.
+
+- **Windows** — re-run the installer and tick **Add to PATH**, then open a new terminal. Or call it directly:
+
+  ```powershell
+  & "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd" --install-extension "$env:USERPROFILE\Downloads\ai-undo-1.0.0.vsix"
+  ```
+
+  A system-wide install lives at `C:\Program Files\Microsoft VS Code\bin\code.cmd` instead.
+
+- **Any OS** — the editor's integrated terminal always has its own CLI on the `PATH`, so opening that and running the command there sidesteps the whole problem.
+
+</details>
+
+A `.vsix` install does not auto-update, so watch the [releases page](https://github.com/SajanRajbanshi/ai-undo/releases) if you install this way.
+
+Requires **git 2.26 or newer** on your `PATH` — see [Requirements](#requirements).
+
+---
+
 ## Why the existing safety nets don't cover this
 
 | | Gap |
@@ -37,6 +124,8 @@ Click a file to review it. Then:
 ### Reviewing a change
 
 Clicking a file opens **the whole file**, not just the changed region — highlighted in its own language, with real line numbers, and **every removed line shown in full**. Nothing is summarised or hidden behind a hover, because a change you don't notice is the one that costs you.
+
+![Walking down the pending changes list — each file opens as a patch with removed lines in red, added lines in green, and both numbered where they actually live](https://raw.githubusercontent.com/SajanRajbanshi/ai-undo/main/docs/images/reviewing-a-change.gif)
 
 ```
     86     private burstStartedAt = 0;
@@ -74,22 +163,6 @@ When you save a file yourself, the baseline advances silently. Nothing appears i
 `git pull`, `rebase`, `stash`, `reset` and `checkout` all rewrite files from outside the editor. Those are auto-accepted rather than listed, because **git operations already have the reflog and `ORIG_HEAD` as a safety net, and agent writes have nothing.** Without this, Reject All after a `git pull` would undo the pull.
 
 Every auto-accepted operation is recorded in the extension's output channel. Change the behavior with `lfct.gitOperations` if you'd rather review them.
-
----
-
-## Installing
-
-**Cursor, Antigravity, Windsurf, VSCodium** — search for **AI Undo** in the Extensions view. These install from [Open VSX](https://open-vsx.org).
-
-**Any editor, from a file** — download `ai-undo-<version>.vsix` from the [latest release](https://github.com/SajanRajbanshi/ai-undo/releases), then either:
-
-```bash
-code --install-extension ai-undo-0.1.0.vsix     # or: cursor / codium / antigravity-ide
-```
-
-or in the editor: **Extensions** view → `···` menu → **Install from VSIX…**
-
-A VSIX install does not auto-update, so watch the [releases page](https://github.com/SajanRajbanshi/ai-undo/releases) if you install this way.
 
 ---
 
