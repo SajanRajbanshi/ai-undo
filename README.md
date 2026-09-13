@@ -6,9 +6,13 @@ Claude Code, opencode, Codex and friends edit files on disk directly. By the tim
 
 **It watches the filesystem, not the agent.** So it catches the edits an agent makes with its own tools *and* the ones it makes by running something else — `sed`, a formatter, a codemod, a migration script, a `mv`. Agents reach for the shell constantly, and those writes are exactly the ones their own checkpoints don't record. Anything that writes a file is covered, including your own build scripts and tools that have nothing to do with AI.
 
+![Walking down the pending changes list — each file opens as a patch with removed lines in red, added lines in green, and both numbered where they actually live](https://raw.githubusercontent.com/SajanRajbanshi/ai-undo/main/docs/images/reviewing-a-change.gif)
+
 ---
 
 ## Install
+
+![Choosing Install from VSIX… in the Extensions ··· menu, selecting the .vsix in the file picker, and the extension finishing installation](https://raw.githubusercontent.com/SajanRajbanshi/ai-undo/main/docs/images/install-from-vsix.gif)
 
 ### From your editor's extension marketplace
 
@@ -20,9 +24,7 @@ Download `ai-undo-1.0.0.vsix` from the [latest release](https://github.com/Sajan
 
 #### Route A — click through the editor
 
-Open the **Extensions** view (<kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>), click the **`···`** menu at the top of that panel, and choose **Install from VSIX…**. A file picker opens — select the `.vsix` you just downloaded.
-
-![Choosing Install from VSIX… in the Extensions ··· menu, selecting the .vsix in the file picker, and the extension finishing installation](https://raw.githubusercontent.com/SajanRajbanshi/ai-undo/main/docs/images/install-from-vsix.gif)
+Open the **Extensions** view (<kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>), click the **`···`** menu at the top of that panel, and choose **Install from VSIX…**. A file picker opens — select the `.vsix` you just downloaded. This is the route shown in the video above.
 
 Reload the window when prompted, and **AI Changes** appears in the Source Control view.
 
@@ -123,9 +125,7 @@ Click a file to review it. Then:
 
 ### Reviewing a change
 
-Clicking a file opens **the whole file**, not just the changed region — highlighted in its own language, with real line numbers, and **every removed line shown in full**. Nothing is summarised or hidden behind a hover, because a change you don't notice is the one that costs you.
-
-![Walking down the pending changes list — each file opens as a patch with removed lines in red, added lines in green, and both numbered where they actually live](https://raw.githubusercontent.com/SajanRajbanshi/ai-undo/main/docs/images/reviewing-a-change.gif)
+Clicking a file opens **the whole file**, not just the changed region — highlighted in its own language, with real line numbers, and **every removed line shown in full**. Nothing is summarised or hidden behind a hover, because a change you don't notice is the one that costs you. The demo at the top of this page shows it in action.
 
 ```
     86     private burstStartedAt = 0;
