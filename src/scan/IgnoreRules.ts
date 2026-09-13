@@ -7,6 +7,7 @@ import {
   L1_DIRS,
   L1_FILES,
   L2_DIRS,
+  L2_DIR_GLOBS,
   L2_FILE_GLOBS,
   L2_PATH_GLOBS,
 } from './defaults';
@@ -37,6 +38,7 @@ export class IgnoreRules {
   private readonly l2Dirs: Set<string>;
   private readonly userExcludeDirs: Set<string>;
 
+  private readonly l2DirGlob: Matcher;
   private readonly l2FileGlob: Matcher;
   private readonly l2PathGlob: Matcher;
   private readonly userExcludeGlob: Matcher;
@@ -66,6 +68,7 @@ export class IgnoreRules {
     this.l2Dirs = new Set(L2_DIRS);
     this.userExcludeDirs = new Set(userDirs);
 
+    this.l2DirGlob = compile(L2_DIR_GLOBS);
     this.l2FileGlob = compile(L2_FILE_GLOBS);
     this.l2PathGlob = compile(L2_PATH_GLOBS);
     this.userExcludeGlob = compile(userGlobs);
@@ -148,7 +151,7 @@ export class IgnoreRules {
     if (this.includeCouldMatchUnder(relDirPath)) return false;
 
     for (const part of parts) {
-      if (this.l2Dirs.has(part) || this.userExcludeDirs.has(part)) return true;
+      if (this.l2Dirs.has(part) || this.userExcludeDirs.has(part) || this.l2DirGlob(part)) return true;
     }
     if (this.l2PathGlob(relDirPath) || this.userExcludeGlob(relDirPath)) return true;
 

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Playwright output is no longer tracked.** `test-results`, `playwright-report`,
+  `blob-report`, `playwright/.auth` and `.playwright-mcp` are now excluded by default,
+  so a test run no longer fills the change list with traces, screenshots and reports.
+  Test files, `playwright.config.*` and committed `*-snapshots` baselines are still
+  tracked.
+- **More framework and tool output is excluded by default**, so installs, builds and
+  dev servers stop filling the change list: hosting and framework caches (`.vercel`,
+  `.netlify`, `.wrangler`, `.angular`, `.astro`, `.output`, `.expo`, `storybook-static`
+  and more), Flutter, Android, SwiftPM and Kotlin build state, Python and ML caches
+  (`.ipynb_checkpoints`, `htmlcov`, `.coverage`, `mlruns`, W&B runs), Haskell, Elixir,
+  Zig, Scala, C/C++, .NET, Bazel and Buck output, Laravel and Symfony caches, infra
+  tooling (`cdk.out`, `.aws-sam`, `.terragrunt-cache`, `.vagrant`), Jekyll output,
+  Aider history, the Local History extension's `.history`, office lock files,
+  `desktop.ini`, `._*` and `*.log`. Every entry except `desktop.ini` can be re-tracked
+  with `lfct.include`. The full list is in `src/scan/defaults.ts`.
+- Lockfiles, `terraform.tfstate`, SQLite databases, `local.properties` and generic
+  directory names such as `public`, `lib`, `logs` and `tmp` remain tracked on purpose.
+
 ## [1.0.0] — 2026-07-28
 
 No functional changes since 0.1.0. The version marks the extension as stable and

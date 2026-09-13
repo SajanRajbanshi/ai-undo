@@ -428,20 +428,30 @@ Budget: a 10k-file tree with pruning walks in roughly 50–200ms on an SSD, whic
 
 Four layers, evaluated in order:
 
-**L1 — Universal.** `.git`, `node_modules`, `.DS_Store`, `Thumbs.db`, and our own storage path.
+**L1 — Universal.** `.git`, `node_modules`, `.DS_Store`, `Thumbs.db`, `desktop.ini`, and our own storage path.
 
 **L2 — Ecosystem build and dependency directories.**
 
 | Ecosystem | Patterns |
 | --- | --- |
-| JS/TS | `dist`, `build`, `out`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `.parcel-cache`, `.cache`, `coverage`, `bower_components` |
-| Python | `.venv`, `venv`, `env`, `__pycache__`, `*.pyc`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `*.egg-info` |
-| Rust / Java / Kotlin | `target`, `.gradle`, `.m2` |
-| .NET | `bin`, `obj` |
-| Go / PHP | `vendor` |
-| iOS / macOS | `Pods`, `DerivedData`, `*.xcworkspace/xcuserdata` |
-| Infra | `.terraform`, `.serverless` |
-| Editors | `.idea`, `.vscode-test`, `*.swp` |
+| JS/TS | `dist`, `build`, `out`, `.next`, `.nuxt`, `.output`, `.svelte-kit`, `.astro`, `.angular`, `.docusaurus`, `.react-router`, `.tanstack`, `.expo`, `.vite`, `.swc`, `.turbo`, `.parcel-cache`, `.cache`, `.nyc_output`, `coverage`, `storybook-static`, `bower_components`, `.pnpm-store`, `.nx/cache`, `.nx/workspace-data`, `.yarn/cache`, `.yarn/unplugged`, `.yarn/install-state.gz`, `.vitepress/cache`, `.vuepress/.temp`, `*.tsbuildinfo`, `.eslintcache`, `.stylelintcache` |
+| JS/TS hosting | `.vercel`, `.netlify`, `.wrangler`, `.firebase`, `.sst`, `.open-next` |
+| Playwright | `test-results`, `playwright-report`, `blob-report`, `.playwright-mcp`, `playwright/.auth` (`playwright/.cache` is covered by `.cache`) |
+| Python | `.venv`, `venv`, `env`, `__pycache__`, `*.pyc`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `*.egg-info`, `.tox`, `.nox`, `.hypothesis`, `.pyre`, `.pytype`, `.eggs`, `.pixi`, `.ipynb_checkpoints`, `htmlcov`, `.coverage`, `.coverage.*` |
+| Machine learning | `mlruns`, `lightning_logs`, `wandb/run-*`, `wandb/offline-run-*`, `wandb/latest-run` |
+| Rust / Java / Kotlin / Scala | `target`, `.gradle`, `.m2`, `.kotlin`, `.bsp`, `.metals`, `.bloop` |
+| .NET | `bin`, `obj`, `.vs`, `TestResults` |
+| Go / PHP | `vendor`, `.phpunit.cache`, `.phpunit.result.cache`, `.php-cs-fixer.cache`, `storage/framework`, `bootstrap/cache`, `var/cache` |
+| iOS / macOS / Android / Flutter | `Pods`, `DerivedData`, `*.xcworkspace/xcuserdata`, `.build`, `Carthage/Build`, `.cxx`, `.externalNativeBuild`, `.dart_tool`, `.flutter-plugins`, `.flutter-plugins-dependencies` |
+| Haskell / Elixir / Zig / C and C++ | `.stack-work`, `dist-newstyle`, `_build`, `.elixir_ls`, `.zig-cache`, `zig-out`, `CMakeFiles`, `cmake-build-*` |
+| Monorepo build systems | `bazel-*`, `buck-out` |
+| Infra | `.terraform`, `.terragrunt-cache`, `.serverless`, `.aws-sam`, `cdk.out`, `.vagrant` |
+| Static sites | `_site`, `.jekyll-cache`, `.sass-cache` |
+| AI tools | `.aider.chat.history.md`, `.aider.input.history`, `.aider.tags.cache.*` |
+| Editors and OS | `.idea`, `.vscode-test`, `.history`, `.direnv`, `*.swp`, `._*`, `~$*`, `.~lock.*#` |
+| Logs | `*.log` |
+
+> A wrongly excluded file has no undo; a wrongly tracked one is only noise. L2 therefore holds only names a tool owns. Generic names (`public`, `lib`, `packages`, `logs`, `tmp`, `deps`, `generated`) and generated-but-precious files (lockfiles, `terraform.tfstate`, SQLite databases, snapshots) are deliberately absent. Name globs such as `bazel-*` are matched against directories only, so they never hide a file like `docs/bazel-guide.md`.
 
 > `bin`, `env`, `out`, and `target` are ambiguous — some projects have real source in them. They must be overridable via `lfct.include`.
 

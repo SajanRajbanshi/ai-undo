@@ -189,6 +189,9 @@ Tracking is governed by the extension's own denylist, **deliberately independent
 
 - `.git`, `node_modules` (not overridable)
 - Build and dependency output: `dist`, `build`, `out`, `.next`, `target`, `bin`, `obj`, `vendor`, `.venv`, `__pycache__`, `Pods`, `.terraform`, and [more](src/scan/defaults.ts)
+- Playwright test output: `test-results`, `playwright-report`, `blob-report`, `playwright/.cache`, `playwright/.auth`, `.playwright-mcp`
+- Framework and tool caches: `.vercel`, `.netlify`, `.angular`, `.astro`, `.dart_tool`, `.ipynb_checkpoints`, `htmlcov`, `cdk.out`, `.history`, `*.tsbuildinfo`, `*.log`, and [more](src/scan/defaults.ts)
+- OS and office junk: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `._*`, `~$*` lock files
 - Files larger than `lfct.maxFileSizeMB` (default 5 MB)
 - Nested repositories and submodules
 
