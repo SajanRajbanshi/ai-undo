@@ -277,11 +277,15 @@ async function readOrCreateMeta(
  * which is correct because the only field that differs is `lastAcceptAt`.
  */
 export async function writeMeta(storagePath: string, meta: StoreMeta): Promise<void> {
-  const metaPath = path.join(storagePath, META_FILE_NAME);
-  const tmp = `${metaPath}.${process.pid}.${randomUUID()}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(meta, null, 2), 'utf8');
+  await writeJsonAtomic(path.join(storagePath, META_FILE_NAME), meta);
+}
+
+/** Write-then-rename with a unique temp name, for the reasons given on `writeMeta`. */
+export async function writeJsonAtomic(filePath: string, value: unknown): Promise<void> {
+  const tmp = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(value, null, 2), 'utf8');
   try {
-    await fs.rename(tmp, metaPath);
+    await fs.rename(tmp, filePath);
   } catch (err) {
     // Never leave the temp file behind; the store directory is the user's.
     await fs.rm(tmp, { force: true });

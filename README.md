@@ -164,6 +164,8 @@ When you save a file yourself, the baseline advances silently. Nothing appears i
 
 Every auto-accepted operation is recorded in the extension's output channel. Change the behavior with `lfct.gitOperations` if you'd rather review them.
 
+A stash sets changes aside; it doesn't accept them. Files that were pending when you ran `git stash` are listed again, against the same baseline as before, when `git stash pop` or `git stash apply` puts them back, even across a window reload. This relies on the files coming back byte for byte. If a pop has to merge with commits you pulled in the meantime, the result is auto-accepted like any other git operation. A pop that conflicts stays listed, conflict markers included.
+
 ---
 
 ## Requirements

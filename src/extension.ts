@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { ChangeDetector } from './detect/ChangeDetector';
 import { GitOpMonitor } from './detect/GitOpMonitor';
 import { reconcile, SweepScheduler } from './detect/reconcile';
+import { ReviewParking } from './detect/ReviewParking';
 import { attachVscodeGitApi } from './detect/vscodeGitApi';
 import type { Logger } from './log';
 import { OutputChannelLogger } from './outputLog';
@@ -164,6 +165,7 @@ class Controller implements vscode.Disposable {
   private walker!: WorkspaceWalker;
   private detector!: ChangeDetector;
   private gitMonitor!: GitOpMonitor;
+  private parking!: ReviewParking;
   private scm!: ScmProvider;
   private baselineProvider!: BaselineContentProvider;
   private patchProvider!: PatchContentProvider;
@@ -229,6 +231,9 @@ class Controller implements vscode.Disposable {
       log: this.log,
     });
     this.disposables.push({ dispose: () => this.store.dispose() });
+
+    this.parking = new ReviewParking(this.store, this.storagePath, this.log);
+    await this.parking.load();
 
     await this.warnOnConcurrentWindow();
 
@@ -449,6 +454,8 @@ class Controller implements vscode.Disposable {
       return;
     }
 
+    // `git stash apply` moves no marker, so a stash coming back can land here.
+    await this.restoreReturningReviews(relPaths);
     await this.runSweep('burst');
     await this.notifier.burst(this.scm.count, () => {
       void vscode.commands.executeCommand('workbench.view.scm');
@@ -471,21 +478,44 @@ class Controller implements vscode.Disposable {
         'Review',
       );
       if (choice !== 'Accept') {
+        await this.restoreReturningReviews(relPaths);
         await this.runSweep('git-op-surface');
         return;
       }
     } else if (mode === 'surface') {
+      await this.restoreReturningReviews(relPaths);
       await this.runSweep('git-op-surface');
       return;
     }
 
     try {
-      await this.store.commitPaths(relPaths, `git operation (${relPaths.length} file(s))`);
-      this.notifier.gitOperationAutoAccepted(relPaths.length);
+      // Not a plain commitPaths: a stash pop must give back the review state
+      // its push took away, not accept it.
+      const { accepted, restored } = await this.parking.acceptGitOperation(
+        relPaths,
+        `git operation (${relPaths.length} file(s))`,
+      );
+      if (accepted.length > 0) this.notifier.gitOperationAutoAccepted(accepted.length);
+      if (restored.length > 0) this.onReviewsRestored(restored);
     } catch (err) {
       this.log.error(`Failed to auto-accept a git operation: ${String(err)}`);
     }
     await this.runSweep('git-op');
+  }
+
+  private async restoreReturningReviews(relPaths: string[]): Promise<void> {
+    try {
+      const restored = await this.parking.restoreReturning(relPaths);
+      if (restored.length > 0) this.onReviewsRestored(restored);
+    } catch (err) {
+      this.log.error(`Failed to restore review state: ${String(err)}`);
+    }
+  }
+
+  /** The baseline moved under any open diff of these files, so redraw them. */
+  private onReviewsRestored(relPaths: string[]): void {
+    this.notifier.reviewsRestored(relPaths.length);
+    this.invalidateContent(relPaths);
   }
 
   /**
@@ -532,6 +562,9 @@ class Controller implements vscode.Disposable {
       this.knownDirsCache = undefined;
       this.baselinePaths = result.tracked;
       this.scm.setStatuses(result.statuses);
+      // Remember what is pending, so a git operation that takes it off disk can
+      // give it back when it returns.
+      void this.parking.observe(result.statuses);
       this.updateActiveFileContext();
       // Redraw the live inline diff against the new pending set.
       this.decorator.invalidate();
@@ -682,6 +715,7 @@ class Controller implements vscode.Disposable {
         },
       );
       if (this.store.hasBaseline()) {
+        await this.parking.clear();
         this.setReady(true);
         await this.runSweep('rebuild');
         this.log.activity('Baseline rebuilt from disk.');

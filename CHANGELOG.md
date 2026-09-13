@@ -27,6 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lockfiles, `terraform.tfstate`, SQLite databases, `local.properties` and generic
   directory names such as `public`, `lib`, `logs` and `tmp` remain tracked on purpose.
 
+### Fixed
+
+- **A stash no longer accepts the changes it sets aside.** `git stash` followed by
+  `git stash pop` was treated as two unrelated git operations and both were
+  auto-accepted, so every change that was pending before the stash dropped out of the
+  list and could no longer be rejected. Pending content a git operation takes off disk
+  is now remembered. When the same content comes back, through `pop`, `apply`,
+  `stash -u` or the Source Control view, those files are listed again against their
+  original baseline. A pop that merges with newer commits is still auto-accepted.
+
 ## [1.0.0] — 2026-07-28
 
 No functional changes since 0.1.0. The version marks the extension as stable and

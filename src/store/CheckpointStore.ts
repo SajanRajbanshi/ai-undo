@@ -27,6 +27,12 @@ export interface FileStatus {
   status: FileStatusCode;
 }
 
+/** One path's entry in the baseline: what `git ls-files --stage` reports for it. */
+export interface BaselineEntry {
+  mode: string;
+  oid: string;
+}
+
 export interface RestoreOutcome {
   restored: string[];
   /** E13 — per-file failures are reported, never swallowed and never fatal. */
@@ -282,6 +288,109 @@ export class CheckpointStore {
       /* not in the index yet */
     }
     return '100644';
+  }
+
+  /**
+   * Object ids for work-tree files, hashed the way `git add` would store them
+   * here, so they compare directly with `baselineEntries`. Nothing is written
+   * to the object store.
+   *
+   * `null` means the file does not exist. A path that is not a regular file is
+   * left out, and so is one `--stdin-paths` cannot carry (a newline, or a
+   * leading quote it would unquote): an id that might not be comparable is
+   * worse than no id.
+   */
+  async hashWorktreeFiles(relPaths: readonly string[]): Promise<Map<string, string | null>> {
+    const out = new Map<string, string | null>();
+    const regular: string[] = [];
+    await Promise.all(
+      relPaths.map(async (rel) => {
+        try {
+          const st = await fs.lstat(toAbs(this.worktree, rel));
+          if (st.isFile() && !/[\r\n]/.test(rel) && !rel.startsWith('"')) regular.push(rel);
+        } catch {
+          out.set(rel, null);
+        }
+      }),
+    );
+    if (regular.length === 0) return out;
+
+    try {
+      const ids = (
+        await this.git.text(['hash-object', '--stdin-paths'], { stdin: regular.join('\n') + '\n' })
+      )
+        .split('\n')
+        .filter((line) => line.length > 0);
+      if (ids.length !== regular.length) {
+        throw new Error(`expected ${regular.length} object ids, got ${ids.length}`);
+      }
+      regular.forEach((rel, i) => out.set(rel, ids[i]));
+    } catch (err) {
+      // One file vanishing between the lstat and the hash fails the whole
+      // batch. Retry singly so it costs only that file.
+      this.log.debug(`Batch hash failed, retrying individually: ${describeError(err)}`);
+      for (const rel of regular) {
+        try {
+          out.set(rel, (await this.git.text(['hash-object', '--', rel])).trim());
+        } catch {
+          /* unknown, which callers treat as "not comparable" */
+        }
+      }
+    }
+    return out;
+  }
+
+  /** Baseline entries for the given paths. A path absent from the result is not in the baseline. */
+  async baselineEntries(relPaths: readonly string[]): Promise<Map<string, BaselineEntry>> {
+    const out = new Map<string, BaselineEntry>();
+    const wanted = new Set(relPaths);
+    if (!this.headExists || wanted.size === 0) return out;
+
+    // `ls-files` has no --pathspec-from-file, so read the whole index, as
+    // `trackedPaths` does. Each record is `<mode> <oid> <stage>\t<path>`.
+    for (const record of await this.git.nulList(['ls-files', '--stage', '-z'])) {
+      const tab = record.indexOf('\t');
+      if (tab === -1) continue;
+      const relPath = record.slice(tab + 1);
+      if (!wanted.has(relPath)) continue;
+      const [mode, oid] = record.slice(0, tab).split(' ');
+      if (mode && oid) out.set(relPath, { mode, oid });
+    }
+    return out;
+  }
+
+  /**
+   * Moves the baseline for each path to a recorded entry, or out of the
+   * baseline for `null`, without touching the work tree. Like `commitContent`,
+   * but for content the store already holds — typically an earlier baseline.
+   */
+  async setBaselineEntries(
+    entries: readonly { relPath: string; entry: BaselineEntry | null }[],
+    reason: string,
+  ): Promise<void> {
+    if (entries.length === 0) return;
+
+    const info = entries
+      .filter((e) => e.entry !== null)
+      .map((e) => `${e.entry!.mode} ${e.entry!.oid}\t${e.relPath}\0`)
+      .join('');
+    if (info.length > 0) {
+      await this.git.run(['update-index', '-z', '--index-info'], {
+        stdin: Buffer.from(info, 'utf8'),
+      });
+    }
+    const removals = entries.filter((e) => e.entry === null).map((e) => e.relPath);
+    if (removals.length > 0) {
+      // `--stdin` must come last: options only apply to paths read after them.
+      await this.git.run(['update-index', '-z', '--force-remove', '--stdin'], {
+        stdin: Buffer.from(removals.map((rel) => `${rel}\0`).join(''), 'utf8'),
+      });
+    }
+
+    if (this.headExists && !(await this.hasStagedChanges())) return;
+    await this.commit(reason);
+    await this.refreshHeadState();
+    this.log.info(`Baseline set for ${entries.length} path(s) [${reason}].`);
   }
 
   // ------------------------------------------------------------------ status

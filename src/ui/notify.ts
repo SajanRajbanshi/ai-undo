@@ -43,6 +43,14 @@ export class Notifier {
     );
   }
 
+  /** The other half of a stash round trip: changes that were pending before it are listed again. */
+  reviewsRestored(fileCount: number): void {
+    this.log.activity(
+      `Listed ${fileCount} file(s) for review again: a git operation put back pending changes it had ` +
+        'taken off disk (for example git stash, then pop or apply).',
+    );
+  }
+
   /**
    * E8 — a file above the size cap is not tracked, which is a real gap in
    * coverage. It must not be silent.
