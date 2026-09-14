@@ -24,5 +24,6 @@ PLAN.md
 # ships everything not listed here, so scratch files added while developing
 # leak into the Marketplace listing unless they are named.
 Sajan.md
+STASH-SCENARIOS.md
 random.cpp
 *.vsix

@@ -4,3 +4,4 @@ out/
 .vscode-test/
 *.vsix
 .DS_Store
+STASH-SCENARIOS.md
