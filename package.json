@@ -2,7 +2,7 @@
   "name": "ai-undo",
   "displayName": "AI Undo — Review & Revert Agent File Changes",
   "description": "Undo what a coding agent changed on disk — including files its scripts and shell commands touched, which agent checkpoints miss. Claude Code, opencode, Codex, or any tool that writes files. Review every added and removed line, then keep or revert.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "SajanRajbanshi",
   "license": "MIT",
   "icon": "media/icon.png",

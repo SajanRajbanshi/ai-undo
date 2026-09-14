@@ -20,7 +20,7 @@ Claude Code, opencode, Codex and friends edit files on disk directly. By the tim
 
 ### From a `.vsix` file — works in any editor, including VS Code
 
-Download `ai-undo-1.0.0.vsix` from the [latest release](https://github.com/SajanRajbanshi/ai-undo/releases) — it lands in your **Downloads** folder. Then take either route below.
+Download `ai-undo-1.1.0.vsix` from the [latest release](https://github.com/SajanRajbanshi/ai-undo/releases) — it lands in your **Downloads** folder. Then take either route below.
 
 #### Route A — click through the editor
 
@@ -36,28 +36,28 @@ Reload the window when prompted, and **AI Changes** appears in the Source Contro
 
 ```bash
 cd ~/Downloads
-code --install-extension ai-undo-1.0.0.vsix
+code --install-extension ai-undo-1.1.0.vsix
 ```
 
 **Linux** — any shell:
 
 ```bash
 cd ~/Downloads
-code --install-extension ai-undo-1.0.0.vsix
+code --install-extension ai-undo-1.1.0.vsix
 ```
 
 **Windows** — PowerShell:
 
 ```powershell
 cd $env:USERPROFILE\Downloads
-code --install-extension .\ai-undo-1.0.0.vsix
+code --install-extension .\ai-undo-1.1.0.vsix
 ```
 
 **Windows** — Command Prompt (`cmd.exe`):
 
 ```bat
 cd %USERPROFILE%\Downloads
-code --install-extension ai-undo-1.0.0.vsix
+code --install-extension ai-undo-1.1.0.vsix
 ```
 
 Restart the editor afterwards. Installing on top of an existing copy? Add `--force` to skip the overwrite prompt.
@@ -72,7 +72,7 @@ The editor is installed; its command-line launcher just isn't on your `PATH`.
 - **macOS** — VS Code doesn't add it during installation. Open the Command Palette (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) and run **Shell Command: Install 'code' command in PATH**, then open a *new* terminal. Or skip `PATH` entirely and call the binary directly:
 
   ```bash
-  "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension ~/Downloads/ai-undo-1.0.0.vsix
+  "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" --install-extension ~/Downloads/ai-undo-1.1.0.vsix
   ```
 
   Cursor's equivalent is `/Applications/Cursor.app/Contents/Resources/app/bin/cursor`.
@@ -82,7 +82,7 @@ The editor is installed; its command-line launcher just isn't on your `PATH`.
 - **Windows** — re-run the installer and tick **Add to PATH**, then open a new terminal. Or call it directly:
 
   ```powershell
-  & "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd" --install-extension "$env:USERPROFILE\Downloads\ai-undo-1.0.0.vsix"
+  & "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd" --install-extension "$env:USERPROFILE\Downloads\ai-undo-1.1.0.vsix"
   ```
 
   A system-wide install lives at `C:\Program Files\Microsoft VS Code\bin\code.cmd` instead.
